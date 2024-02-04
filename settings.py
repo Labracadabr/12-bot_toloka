@@ -2,8 +2,8 @@ import os
 import json
 
 # tg канал для логов
-log_channel_id = ''
-# log_channel_id = '-1002006918299'
+# log_channel_id = ''
+log_channel_id = '-1002130916129'
 
 # Список id админов
 dima = "992863889"
