@@ -5,8 +5,7 @@ from aiogram.types import CallbackQuery, Message, URLInputFile, Poll, PollAnswer
 from pprint import pprint
 import requests
 from bot_logic import *
-from toloka_scripts.simp_test import start_test
-import toloka_scripts.project_141070
+from toloka_scripts import project_141070, project_154569, simp_test
 from g_sheet import g_sheet_report
 # Инициализация
 router: Router = Router()
@@ -121,7 +120,7 @@ async def simp_test_request(msg: Message, bot: Bot, state: FSMContext):
     pprint(pool_params)
 
     # создать пул
-    result = await start_test(pool_params=pool_params)
+    result = await simp_test.start_test(pool_params=pool_params)
 
     # внести в таблицу
     if 'ошибка' not in result.lower():
@@ -131,11 +130,19 @@ async def simp_test_request(msg: Message, bot: Bot, state: FSMContext):
 
 
 # скрипты проектов
-@router.message(Command("141070", prefix="!"),)
+@router.message(Command("141070", '154569', prefix="!"),)
 async def p(msg: Message):
     user = str(msg.from_user.id)
+    project = msg.text.strip('!')
     await msg.answer(text='Скрипт запущен')
-    res = toloka_scripts.project_141070.main()
+    res = ''
+    try:
+        if project == '154569':
+            res = project_154569.main()
+        elif project == '141070':
+            res = project_141070.main()
+    except Exception as e:
+        res = f'Ошибка\n{e}'
     await msg.answer(text=res if res else 'Ошибка')
     await log(logs, user, msg.text+'_'+res)
 
