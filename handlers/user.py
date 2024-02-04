@@ -73,31 +73,31 @@ def validate_simp_test_request(msg_text: str):
 
 # команда /start
 @router.message(Command(commands=['start']))
-async def command(msg: Message):
+async def command(msg: Message, bot):
     user = str(msg.from_user.id)
-    await log(logs, user, '/start')
+    await log(logs, user, '/start', bot=bot)
     await msg.answer('Привет')
 
 
 # команда /help
 @router.message(Command(commands=['help']))
-async def command(msg: Message):
+async def command(msg: Message, bot):
     user = str(msg.from_user.id)
-    await log(logs, user, '/help')
+    await log(logs, user, '/help', bot=bot)
     await msg.answer('no help')
 
 
 # юзер создает тест
 @router.message(Command(commands=['simp_test']))
-async def alb(msg: Message, state):
+async def alb(msg: Message, state, bot):
     user = str(msg.from_user.id)
     if user in admins:
         await msg.answer('Отправь данные для нового пула')
         await state.set_state(FSM.simp_test)
-        await log(logs, user, msg.text)
+        await log(logs, user, msg.text, bot=bot)
     else:
         await msg.answer('Нет доступа')
-        await log(logs, user, msg.text+'_no_access')
+        await log(logs, user, msg.text+'_no_access', bot=bot)
 
 
 # юзер указал данные теста
@@ -131,7 +131,7 @@ async def simp_test_request(msg: Message, bot: Bot, state: FSMContext):
 
 # скрипты проектов
 @router.message(Command("141070", '154569', prefix="!"),)
-async def p(msg: Message):
+async def p(msg: Message, bot):
     user = str(msg.from_user.id)
     project = msg.text.strip('!')
     await msg.answer(text='Скрипт запущен')
@@ -144,7 +144,7 @@ async def p(msg: Message):
     except Exception as e:
         res = f'Ошибка\n{e}'
     await msg.answer(text=res if res else 'Ошибка')
-    await log(logs, user, msg.text+'_'+res)
+    await log(logs, user, msg.text+'_'+res, bot=bot)
 
 
 # юзер что-то еще пишет

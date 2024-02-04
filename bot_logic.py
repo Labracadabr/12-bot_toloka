@@ -5,7 +5,7 @@ from aiogram.types import Message, CallbackQuery, FSInputFile, User, URLInputFil
 from aiogram import Bot, Dispatcher
 from datetime import datetime
 import importlib
-
+from config import config
 from settings import *
 
 # Фильтр, проверяющий доступ юзера
@@ -47,7 +47,6 @@ async def log(file, key, item, bot: Bot = None):
     # дублировать логи в консоль
     log_text = str(key)+' '+str(item)
     print(log_text)
-    # дублировать логи в тг-канал
     if bot and log_channel_id:
         try:
             await bot.send_message(chat_id=log_channel_id, text=log_text)
