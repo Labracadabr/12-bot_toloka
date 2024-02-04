@@ -24,3 +24,4 @@ def check_files():
                 with open(file, 'w', encoding='utf-8') as f:
                     print('Отсутствующий файл создан:', file)
                     print('\t'.join(('Time', 'User', 'Action')), file=f)
+    print('OK')

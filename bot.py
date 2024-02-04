@@ -2,7 +2,7 @@ import asyncio
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram import Bot, Dispatcher
 from config import config
-from handlers import admin, user, channels
+from handlers import admin, user
 import settings
 
 # Инициализация бота
