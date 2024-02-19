@@ -1,3 +1,4 @@
+import os
 from aiogram.fsm.context import FSMContext
 from aiogram import Router, Bot, F
 from aiogram.filters import Command, CommandStart, StateFilter, CommandObject
@@ -5,13 +6,13 @@ from aiogram.types import CallbackQuery, Message, URLInputFile, Poll, PollAnswer
 from pprint import pprint
 import requests
 from bot_logic import *
-from toloka_scripts import project_141070, project_154569, simp_test
+from toloka_scripts import project_141070, project_154569, simp_test, check_html
 from g_sheet import g_sheet_report
 # Инициализация
 router: Router = Router()
+tmp_sbs = 'tmp_sbs'
 
-
-def validate_simp_test_request(msg_text: str):
+def validate_url_test_request(msg_text: str):
     """
     Пример что должно быть на выходе
     {'account': 'avito',
@@ -71,6 +72,7 @@ def validate_simp_test_request(msg_text: str):
         return 'Не задано число респондентов'
     return pool_params
 
+
 # команда /start
 @router.message(Command(commands=['start']))
 async def command(msg: Message, bot):
@@ -87,14 +89,39 @@ async def command(msg: Message, bot):
     await msg.answer('no help')
 
 
-# юзер создает тест
-@router.message(Command(commands=['simp_test']))
-async def alb(msg: Message, state, bot):
+# команда /check_html
+@router.message(Command(commands=['check_html']))
+async def check_html_command(msg: Message, bot, state):
     user = str(msg.from_user.id)
+    await log(logs, user, '/check_html', bot=bot)
+    await msg.answer('Отправь ссылку на проект для проверки полей HTML')
+    await state.set_state(FSM.html)
+
+
+# юзер указал проект для проверки html
+@router.message(StateFilter(FSM.html))
+async def checking_html(msg: Message, bot, state):
+    user = str(msg.from_user.id)
+    result = check_html.check_html(msg.text.lower())
+
+    await log(logs, user, result, bot=bot)
+    await msg.answer(result)
+    await state.clear()
+
+# юзер создает тест
+@router.message(Command(commands=['url_test', 'sbs_test']))
+async def set_test(msg: Message, state, bot):
+    user = str(msg.from_user.id)
+    txt = msg.text.replace('/', '')
     if user in admins:
-        await msg.answer('Отправь данные для нового пула')
-        await state.set_state(FSM.simp_test)
+        if txt == 'url_test':
+            await msg.answer('Отправь данные для нового пула')
+            await state.set_state(FSM.url_test)
+        elif txt == 'sbs_test':
+            await msg.answer('Отправь архив для нового пула')
+            await state.set_state(FSM.sbs_test)
         await log(logs, user, msg.text, bot=bot)
+
     else:
         await msg.answer('Нет доступа')
         await log(logs, user, msg.text+'_no_access', bot=bot)
@@ -102,12 +129,12 @@ async def alb(msg: Message, state, bot):
 
 # юзер указал данные теста
 # @router.message()
-@router.message(StateFilter(FSM.simp_test))
-async def simp_test_request(msg: Message, bot: Bot, state: FSMContext):
+@router.message(StateFilter(FSM.url_test))
+async def url_test_request(msg: Message, bot: Bot, state: FSMContext):
     user = str(msg.from_user.id)
     await state.clear()
     # проверить правильность запроса
-    pool_params = validate_simp_test_request(msg_text=msg.text)
+    pool_params = validate_url_test_request(msg_text=msg.text)
     if not isinstance(pool_params, dict):
         await msg.answer(f'Ошибка:\n{pool_params}')
         return
@@ -144,7 +171,7 @@ async def p(msg: Message, bot):
     except Exception as e:
         res = f'Ошибка\n{e}'
     await msg.answer(text=res if res else 'Ошибка')
-    await log(logs, user, msg.text+'_'+res, bot=bot)
+    await log(logs, user, msg.text+res, bot=bot)
 
 
 # юзер что-то еще пишет

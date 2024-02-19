@@ -18,9 +18,9 @@ env = Env()
 env.read_env()
 config = Config(
     BOT_TOKEN=env('BOT_TOKEN'),
-    # td=env('td'),
+    td=env('td'),
     td5=env('td5'),
-    # yaz=env('yaz'),
+    yaz=env('yaz'),
     avi=env('avi'),
     # aws_id=env('aws_id'),
     # aws_sc=env('aws_sc'),
