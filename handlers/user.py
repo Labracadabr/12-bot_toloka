@@ -80,6 +80,10 @@ async def command(msg: Message, bot):
     await log(logs, user, '/start', bot=bot)
     await msg.answer('Привет')
 
+    # сообщить админу, кто стартанул бота
+    alert = f'➕ user {contact_user(msg.from_user)}'
+    await bot.send_message(text=alert, chat_id=admins[0], disable_notification=True, parse_mode='HTML')
+
 
 # команда /help
 @router.message(Command(commands=['help']))
