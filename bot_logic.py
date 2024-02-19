@@ -22,11 +22,10 @@ class Access(BaseFilter):
 # Состояния FSM
 class FSM(StatesGroup):
     # Состояния, в которых будет находиться бот в разные моменты взаимодействия с юзером
-    ask_sheet = State()
-    ask_channel = State()
-    confirm = State()
-    password = State()
-    simp_test = State()
+    html = State()
+    url_test = State()
+    sbs_test = State()
+    sbs_wait = State()
 
 
 # Запись данных item в указанный csv file по ключу key
