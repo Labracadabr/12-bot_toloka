@@ -68,19 +68,21 @@ async def start_test(pool_params: dict):
     session = requests.Session()
     result = ''
     try:
-        toloka_token = config.avi
-        url_api = "https://toloka.dev/api/v1"
+        toloka_token = config.yaz
+        # url_api = "https://toloka.dev/api/v1"
+        url_api = "https://tasks.yandex.ru/api/v1"
         headers = {"Authorization": "OAuth %s" % toloka_token, "Content-Type": "application/JSON"}
 
         # создать пул
-        project_id = "78493"
+        project_id = "2269"
         private_name = f"{pool_params['date']}_{pool_params['device']}_{pool_params['user_fullname']}"
+        # private_name = f"{pool_params['date']}_{pool_params['device']}_{pool_params['user_fullname']}"
         pool_data = {
             "project_id": project_id,
             "private_name": private_name,
             "will_expire": "2030-01-01T00:00:00.000Z",
             "may_contain_adult_content": False,
-            "reward_per_assignment": 0.02,
+            "reward_per_assignment": 2,
             "assignment_max_duration_seconds": 1800,
             "auto_accept_solutions": False,
             "auto_accept_period_day": 1,
@@ -138,7 +140,8 @@ async def start_test(pool_params: dict):
         pprint(r.json())
         assert r.ok
         pool_id = r.json()['id']
-        pool_link = f'https://platform.toloka.ai/requester/project/{project_id}/pool/{pool_id}'
+        # pool_link = f'https://platform.toloka.ai/requester/project/{project_id}/pool/{pool_id}'
+        pool_link = f'https://tasks.yandex.ru/requester/project/{project_id}/pool/{pool_id}'
         result += f'Пул создан: {pool_link}\n'
 
         # загрузить задания
