@@ -68,13 +68,13 @@ async def start_test(pool_params: dict):
     session = requests.Session()
     result = ''
     try:
-        toloka_token = config.yaz
+        toloka_token = config.avi
         # url_api = "https://toloka.dev/api/v1"
         url_api = "https://tasks.yandex.ru/api/v1"
         headers = {"Authorization": "OAuth %s" % toloka_token, "Content-Type": "application/JSON"}
 
         # создать пул
-        project_id = "2269"
+        project_id = "2343"
         private_name = f"{pool_params['date']}_{pool_params['device']}_{pool_params['user_fullname']}"
         # private_name = f"{pool_params['date']}_{pool_params['device']}_{pool_params['user_fullname']}"
         pool_data = {
