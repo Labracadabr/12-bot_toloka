@@ -8,6 +8,7 @@ import requests
 from bot_logic import *
 from toloka_scripts import project_141070, project_154569, simp_test, check_html
 from g_sheet import g_sheet_report
+from psql import top_countries, rm_duplicates
 # Инициализация
 router: Router = Router()
 tmp_sbs = 'tmp_sbs'
@@ -93,6 +94,34 @@ async def command(msg: Message, bot):
     await msg.answer('no help')
 
 
+# проверить сколько машин в БД
+@router.message(lambda msg: msg.text.lower().startswith('car top'))
+async def command(msg: Message, bot: Bot):
+    user = str(msg.from_user.id)
+    await log(logs, user, msg.text, bot=bot)
+
+    # проверить ввод
+    top_num = msg.text.split()[-1]
+    if not top_num.isnumeric():
+        await msg.answer('Не задано число')
+        return
+    edit_msg = await msg.answer(f'Считаю топ {top_num} стран')
+
+    # sql
+    rm_duplicates()
+    top_list = top_countries(num=top_num)
+
+    # вывод списка
+    print(f'{top_list = }')
+    output = ''
+    for i, country in enumerate(top_list, start=1):
+        output += f'{i}. {country[0]}: {country[1]}\n'
+
+    print(f'{output = }')
+
+    await bot.edit_message_text(chat_id=user, message_id=edit_msg.message_id, text=output)
+
+
 # команда /check_html
 @router.message(Command(commands=['check_html']))
 async def check_html_command(msg: Message, bot, state):
@@ -111,6 +140,7 @@ async def checking_html(msg: Message, bot, state):
     await log(logs, user, result, bot=bot)
     await msg.answer(result)
     await state.clear()
+
 
 # юзер создает тест
 @router.message(Command(commands=['url_test', 'sbs_test']))
