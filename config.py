@@ -12,6 +12,12 @@ class Config:
     aws_id: str = None  # aws s3
     aws_sc: str = None  # aws s3
 
+    host: str = None                # хост
+    dbname: str = None              # имя базы данных
+    user: str = None                # пользователь
+    password: str = None            # пароль
+    port: int = None                # порт
+
 
 # загрузить конфиг из переменных окружения
 env = Env()
@@ -22,6 +28,11 @@ config = Config(
     td5=env('td5'),
     yaz=env('yaz'),
     avi=env('avi'),
-    # aws_id=env('aws_id'),
-    # aws_sc=env('aws_sc'),
+    aws_id=env('aws_id'),
+    aws_sc=env('aws_sc'),
+    host=env('host'),
+    dbname=env('dbname'),
+    user=env('user'),
+    password=env('password'),
+    port=env.int('port')
     )
