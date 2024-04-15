@@ -6,7 +6,7 @@ from aiogram.types import CallbackQuery, Message, URLInputFile, Poll, PollAnswer
 from pprint import pprint
 import requests
 from bot_logic import *
-from toloka_scripts import project_141070, project_154569, simp_test, check_html
+from toloka_scripts import project_141070, project_154569, simp_test, check_html, yndx_2609
 from g_sheet import g_sheet_report
 from psql import top_countries, rm_duplicates
 # Инициализация
@@ -191,7 +191,7 @@ async def url_test_request(msg: Message, bot: Bot, state: FSMContext):
 
 
 # скрипты проектов
-@router.message(Command("141070", '154569', prefix="!"),)
+@router.message(Command("141070", '154569', '2609', prefix="!"),)
 async def p(msg: Message, bot):
     user = str(msg.from_user.id)
     project = msg.text.strip('!')
@@ -202,6 +202,9 @@ async def p(msg: Message, bot):
             res = project_154569.main()
         elif project == '141070':
             res = project_141070.main()
+        elif project == '2609':
+            res = yndx_2609.read_pool(pool='1763442')
+
     except Exception as e:
         res = f'Ошибка\n{e}'
     await msg.answer(text=res if res else 'Ошибка')
