@@ -4,6 +4,8 @@ from config import config
 
 def toloka_reject(ass_id: str, reject_comment: str, client) -> bool:
     try:
+        tag = '~'
+        reject_comment = reject_comment if tag in reject_comment else tag + reject_comment
         client.reject_assignment(assignment_id=ass_id, public_comment=reject_comment)
         return True
     except Exception as e:
@@ -24,7 +26,7 @@ def do_pool(pool, client):
             output = ass.solutions[0].output_values
             age = output.get('age')
             gender = output.get('gender')
-            country = client.get_user(ass.user_id).country
+            # country = client.get_user(ass.user_id).country
             try:
                 # woman 60
                 if pool == '42740441':
@@ -37,10 +39,10 @@ def do_pool(pool, client):
                         unchecked += 1
 
                 # kids
-                elif pool == '42740443':
+                else:
                     if int(age) > 15:
                         toloka_reject(ass_id=ass.id, reject_comment='The task is only for kids 15 years old or below', client=client)
-                        print(f'reject {ass.id} {country} {gender} {age}')
+                        print(f'reject {ass.id} {gender} {age}')
                         rejected += 1
                     # если не отклонено
                     else:
@@ -58,7 +60,9 @@ def main():
     toloka_client = toloka.TolokaClient(token=config.td5, environment='PRODUCTION')
     pools = [
         '42740441',  # woman 60+
-        '42740443',  # kids
+        # '42740443',  # kids
+        '42903078',  # kids asia
+        '42905630',  # kids euro
     ]
     result = ''
     for i in pools:
