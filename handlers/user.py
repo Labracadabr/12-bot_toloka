@@ -6,12 +6,10 @@ from aiogram.types import CallbackQuery, Message, URLInputFile, Poll, PollAnswer
 from pprint import pprint
 import requests
 from bot_logic import *
-from toloka_scripts import project_141070, project_154569, simp_test, check_html, yndx_2609
-from g_sheet import g_sheet_report
+from toloka_scripts import simp_test, check_html, yndx_2609
 from psql import top_countries, rm_duplicates
 # Инициализация
 router: Router = Router()
-tmp_sbs = 'tmp_sbs'
 
 def validate_url_test_request(msg_text: str):
     """
@@ -71,6 +69,8 @@ def validate_url_test_request(msg_text: str):
         return repr(e)
     if 'overlap' not in pool_params:
         return 'Не задано число респондентов'
+    if 'tasks' not in pool_params:
+        return 'Нет заданий'
     return pool_params
 
 
@@ -162,7 +162,6 @@ async def set_test(msg: Message, state, bot):
 
 
 # юзер указал данные теста
-# @router.message()
 @router.message(StateFilter(FSM.url_test))
 async def url_test_request(msg: Message, bot: Bot, state: FSMContext):
     user = str(msg.from_user.id)
@@ -183,9 +182,6 @@ async def url_test_request(msg: Message, bot: Bot, state: FSMContext):
     # создать пул
     result = await simp_test.start_test(pool_params=pool_params)
 
-    # внести в таблицу
-    if 'ошибка' not in result.lower():
-        result += g_sheet_report(pool_params=pool_params)
     print(result)
     await msg.answer(text=result, disable_web_page_preview=True, parse_mode='HTML')
 

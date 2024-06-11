@@ -76,7 +76,6 @@ async def start_test(pool_params: dict):
         # создать пул
         project_id = "2343"
         private_name = f"{pool_params['date']}_{pool_params['device']}_{pool_params['user_fullname']}"
-        # private_name = f"{pool_params['date']}_{pool_params['device']}_{pool_params['user_fullname']}"
         pool_data = {
             "project_id": project_id,
             "private_name": private_name,
@@ -84,8 +83,7 @@ async def start_test(pool_params: dict):
             "may_contain_adult_content": False,
             "reward_per_assignment": 2,
             "assignment_max_duration_seconds": 1800,
-            "auto_accept_solutions": False,
-            "auto_accept_period_day": 1,
+            "auto_accept_solutions": True,
             "quality_control": {
                 "configs": [
                     {
@@ -108,6 +106,32 @@ async def start_test(pool_params: dict):
                                     "parameters": {
                                         "scope": "POOL",
                                         "duration_unit": "PERMANENT"
+                                    }
+                                }
+                            },
+                        ]
+                    },
+                    {
+                        "collector_config": {
+                            "type": "ANSWER_COUNT",
+                            "uuid": "5eb8520b-121f-45df-95a3-c39a399242a3",
+                            "parameters": {}
+                        },
+                        "rules": [
+                            {
+                                "conditions": [
+                                    {
+                                        "key": "assignments_accepted_count",
+                                        "operator": "GT",
+                                        "value": 0
+                                    }
+                                ],
+                                "action": {
+                                    "type": "RESTRICTION_V2",
+                                    "parameters": {
+                                        "duration": 1,
+                                        "scope": "PROJECT",
+                                        "duration_unit": "MINUTES"
                                     }
                                 }
                             }
@@ -171,9 +195,9 @@ async def start_test(pool_params: dict):
         result += f'Пул запущен\n'
 
     except AssertionError as e:  # если какой-либо запрос неудачный
-        result += f'Ошибка {repr(e)}\n{r.json()}'
+        result += f'⚠️ Ошибка: {repr(e)}\n{r.json()}'
     except Exception as e:  # прочие ошибки
-        result += f'Ошибка {repr(e)}\n'
+        result += f'🚫 Ошибка: {repr(e)}\n'
 
     finally:
         # print(result)
