@@ -6,72 +6,10 @@ from aiogram.types import CallbackQuery, Message, URLInputFile, Poll, PollAnswer
 from pprint import pprint
 import requests
 from bot_logic import *
-from toloka_scripts import simp_test, check_html, yndx_2609
+from toloka_scripts import url_test, check_html, yndx_2609
 from psql import top_countries, rm_duplicates
 # Инициализация
 router: Router = Router()
-
-def validate_url_test_request(msg_text: str):
-    """
-    Пример что должно быть на выходе
-    {'account': 'avito',
-     'date': '2024-01-29',
-     'device': 'pc',
-     'overlap': '300',
-     'tasks': [{'input_values': {'code': '573', 'img_url': 'https://usabi.li/do/49e0d8d070c1/7439'}},
-               {'input_values': {'code': '574', 'img_url': 'https://usabi.li/do/49e0d8d070c1/7440'}}],
-     # 'user_fullname': 'Dmitrii Minokin',
-     # 'user_id': 992863889,
-     # 'user_username': 'its_dmitrii'
-     }
-    """
-    session = requests.session()
-    pool_params = {}
-    pool_params.setdefault('account', 'avito')
-    # pool_params.setdefault('input_values', {})
-    try:
-        print('Проверка сообщения')
-        for line in msg_text.lower().split('\n'):
-            # сами задания
-            if 'http' in line:
-                task_suite = {}
-                for word in line.split():
-                    # проверочный код
-                    if word.isnumeric():
-                        task_suite['code'] = word
-                    # ссылка на тест
-                    elif 'http' in word:
-                        url = word
-                        resp = session.get(url)  # проверить ссылку
-                        print(url, resp.status_code)
-                        if not resp.ok:
-                            return f'Нерабочая ссылка: {url}, status_code {resp.status_code}'
-                        task_suite['img_url'] = url
-
-                if not len(task_suite) == 2:
-                    return f'Нет кода или нет ссылки: {task_suite}'
-                pool_params.setdefault('tasks', []).append({"input_values": task_suite})
-
-            # overlap
-            elif 'чел' in line or 'респ' in line:
-                for word in line.split():
-                    if word.isnumeric():
-                        pool_params['overlap'] = word
-
-            # device type
-            if 'пк' in line or 'десктоп' in line or 'веб' in line:
-                pool_params['device'] = 'pc'
-            elif 'моб' in line:
-                pool_params['device'] = 'mob'
-
-    except Exception as e:
-        print(e)
-        return repr(e)
-    if 'overlap' not in pool_params:
-        return 'Не задано число респондентов'
-    if 'tasks' not in pool_params:
-        return 'Нет заданий'
-    return pool_params
 
 
 # команда /start
@@ -158,7 +96,74 @@ async def set_test(msg: Message, state, bot):
 
     else:
         await msg.answer('Нет доступа')
-        await log(logs, user, msg.text+'_no_access', bot=bot)
+        await log(logs, user, msg.text+' no_access', bot=bot)
+
+
+# юзер отправил архив для SBS
+# @router.message()
+@router.message(StateFilter(FSM.sbs_test))
+async def sbs_test_request(msg: Message, bot: Bot, state: FSMContext):
+    user = str(msg.from_user.id)
+    pprint(msg)
+    if not msg.document or 'zip' not in msg.document.mime_type:
+        await msg.answer(f'Ошибка: я ожидаю Zip архив')
+        await state.clear()
+        return
+    os.makedirs(name='tmp_sbs', exist_ok=True)
+    file_id = msg.document.file_id
+
+    # получить ссылку для скачивания архива
+    try:
+        file_info = await bot.get_file(file_id)
+        file_url = file_info.file_path
+        url = f'https://api.telegram.org/file/bot{config.BOT_TOKEN}/{file_url}'
+        print('zip url ok:', url)
+    except Exception as e:
+        await msg.answer(f'Произошла ошибка при получении архива:\n{e}')
+        await state.clear()
+        return
+
+    # скачать архив
+    response = requests.get(url=url)
+    try:
+        # создать файл
+        zip_name = os.path.join(tmp_sbs, f'{msg.document.file_name}.zip')
+        with open(zip_name, 'wb') as media:
+            media.write(response.content)
+    except Exception as e:
+        await msg.answer(f'Произошла ошибка при скачивании архива:\n{e}')
+        await state.clear()
+        return
+
+    # распаковать скачанный архив
+    sbs_pics = []
+    with zipfile.ZipFile(zip_name, mode="r") as archive:
+        for file_info in archive.infolist():
+            file = file_info.filename.encode('cp437').decode('utf-8')  # декодинг кириллицы
+            if file.endswith((".jpg", '.png')) and '/' not in file:
+                sbs_pics.append(file)
+                archive.extract(file_info, f"{tmp_sbs}/")
+                try:
+                    path = f"{tmp_sbs}/{file_info}"
+                    os.rename(dst=path, src=path.replace(file_info.filename, file))
+                    print('file renamed')
+                except Exception as e:
+                    print(e)
+                    pass
+
+    if sbs_pics:
+        pics_list_txt = [f'№ {i}: {f}\n' for i, f in enumerate(sbs_pics, start=1)]
+        await msg.answer(text=f'Архив распакован. Найдены файлы:\n{"".join(pics_list_txt)}'
+          f'\nУкажи через пробел номера файлов, который нужно использовать как хороший и плохой ханипот, например: "2 3". Либо напиши "нет", если ханипот не нужен')
+        await state.set_state(FSM.sbs_wait)
+
+
+# юзер указал ханипоты
+# @router.message()
+@router.message(StateFilter(FSM.sbs_wait))
+async def sbs_honey(msg: Message, bot: Bot, state: FSMContext):
+    user = str(msg.from_user.id)
+    await state.clear()
 
 
 # юзер указал данные теста
@@ -167,7 +172,7 @@ async def url_test_request(msg: Message, bot: Bot, state: FSMContext):
     user = str(msg.from_user.id)
     await state.clear()
     # проверить правильность запроса
-    pool_params = validate_url_test_request(msg_text=msg.text)
+    pool_params = url_test.validate_url_test_request(msg_text=msg.text)
     if not isinstance(pool_params, dict):
         await msg.answer(f'Ошибка:\n{pool_params}')
         return

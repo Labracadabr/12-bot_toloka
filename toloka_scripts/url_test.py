@@ -1,6 +1,4 @@
-import os
 import requests
-import json
 from config import config
 from pprint import pprint
 
@@ -62,8 +60,8 @@ pool_filter = {
 }
 
 
-# toloka
-async def start_test(pool_params: dict):
+# запуск теста
+async def start_test(pool_params: dict) -> str:
     print('создание')
     session = requests.Session()
     result = ''
@@ -202,3 +200,67 @@ async def start_test(pool_params: dict):
     finally:
         # print(result)
         return result
+
+
+# проверить правильность ввода
+def validate_url_test_request(msg_text: str) -> dict|str:
+    """
+    Пример что должно быть на выходе
+    {'account': 'avito',
+     'date': '2024-01-29',
+     'device': 'pc',
+     'overlap': '300',
+     'tasks': [{'input_values': {'code': '573', 'img_url': 'https://usabi.li/do/49e0d8d070c1/7439'}},
+               {'input_values': {'code': '574', 'img_url': 'https://usabi.li/do/49e0d8d070c1/7440'}}],
+     # 'user_fullname': 'Dmitrii Minokin',
+     # 'user_id': 992863889,
+     # 'user_username': 'its_dmitrii'
+     }
+    """
+    session = requests.session()
+    pool_params = {}
+    pool_params.setdefault('account', 'avito')
+    # pool_params.setdefault('input_values', {})
+    try:
+        print('Проверка сообщения')
+        for line in msg_text.lower().split('\n'):
+            # сами задания
+            if 'http' in line:
+                task_suite = {}
+                for word in line.split():
+                    # проверочный код
+                    if word.isnumeric():
+                        task_suite['code'] = word
+                    # ссылка на тест
+                    elif 'http' in word:
+                        url = word
+                        resp = session.get(url)  # проверить ссылку
+                        print(url, resp.status_code)
+                        if not resp.ok:
+                            return f'Нерабочая ссылка: {url}, status_code {resp.status_code}'
+                        task_suite['img_url'] = url
+
+                if not len(task_suite) == 2:
+                    return f'Нет кода или нет ссылки: {task_suite}'
+                pool_params.setdefault('tasks', []).append({"input_values": task_suite})
+
+            # overlap
+            elif 'чел' in line or 'респ' in line:
+                for word in line.split():
+                    if word.isnumeric():
+                        pool_params['overlap'] = word
+
+            # device type
+            if 'пк' in line or 'десктоп' in line or 'веб' in line:
+                pool_params['device'] = 'pc'
+            elif 'моб' in line:
+                pool_params['device'] = 'mob'
+
+    except Exception as e:
+        print(e)
+        return repr(e)
+    if 'overlap' not in pool_params:
+        return 'Не задано число респондентов'
+    if 'tasks' not in pool_params:
+        return 'Нет заданий'
+    return pool_params
