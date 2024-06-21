@@ -158,7 +158,7 @@ async def start_test(pool_params: dict) -> str:
                 "default_overlap_for_new_task_suites": pool_params.get('overlap')
             },
         }
-        r = session.post(url=url_api+"/pools", headers=headers, json=pool_data)
+        r = session.post(url=url_api + "/pools", headers=headers, json=pool_data)
         pprint(r.json())
         assert r.ok
         pool_id = r.json()['id']
@@ -179,7 +179,8 @@ async def start_test(pool_params: dict) -> str:
         device = pool_params.get('device')
         # gender = pool_params.get('gender')
         if device:
-            pool_filter['and'].append(filter_map[device])
+            filter_map_copy = filter_map
+            pool_filter['and'].append(filter_map_copy[device])
         # pool_data = session.get(f"{url_api}{pool_id}", headers=headers).json()
         pool_data['filter'] = pool_filter
         url = url_api + '/pools/' + pool_id
@@ -202,8 +203,8 @@ async def start_test(pool_params: dict) -> str:
         return result
 
 
-# проверить правильность ввода
-def validate_url_test_request(msg_text: str) -> dict|str:
+# проверить правильность ввода. при ошибке вернется str, если все ок - dict
+def validate_url_test_request(msg_text: str) -> dict | str:
     """
     Пример что должно быть на выходе
     {'account': 'avito',
