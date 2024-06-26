@@ -213,9 +213,6 @@ def validate_url_test_request(msg_text: str) -> dict | str:
      'overlap': '300',
      'tasks': [{'input_values': {'code': '573', 'img_url': 'https://usabi.li/do/49e0d8d070c1/7439'}},
                {'input_values': {'code': '574', 'img_url': 'https://usabi.li/do/49e0d8d070c1/7440'}}],
-     # 'user_fullname': 'Dmitrii Minokin',
-     # 'user_id': 992863889,
-     # 'user_username': 'its_dmitrii'
      }
     """
     session = requests.session()

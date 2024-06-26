@@ -5,7 +5,7 @@ from aiogram.filters import Command, CommandStart, StateFilter, CommandObject
 from aiogram.types import CallbackQuery, Message, URLInputFile, Poll, PollAnswer
 from pprint import pprint
 import requests
-from bot_logic import *
+from utils import *
 from toloka_scripts import url_test, check_html, yndx_2609
 from psql import top_countries, rm_duplicates
 # Инициализация
@@ -30,34 +30,6 @@ async def command(msg: Message, bot):
     user = str(msg.from_user.id)
     await log(logs, user, '/help', bot=bot)
     await msg.answer('no help')
-
-
-# проверить сколько машин в БД
-@router.message(lambda msg: msg.text.lower().startswith('car top'))
-async def command(msg: Message, bot: Bot):
-    user = str(msg.from_user.id)
-    await log(logs, user, msg.text, bot=bot)
-
-    # проверить ввод
-    top_num = msg.text.split()[-1]
-    if not top_num.isnumeric():
-        await msg.answer('Не задано число')
-        return
-    edit_msg = await msg.answer(f'Считаю топ {top_num} стран')
-
-    # sql
-    rm_duplicates()
-    top_list = top_countries(num=top_num)
-
-    # вывод списка
-    print(f'{top_list = }')
-    output = ''
-    for i, country in enumerate(top_list, start=1):
-        output += f'{i}. {country[0]}: {country[1]}\n'
-
-    print(f'{output = }')
-
-    await bot.edit_message_text(chat_id=user, message_id=edit_msg.message_id, text=output)
 
 
 # команда /check_html
@@ -98,8 +70,14 @@ async def set_test(msg: Message, state, bot):
 # юзер указал данные теста
 @router.message(StateFilter(FSM.url_test))
 async def url_test_request(msg: Message, bot: Bot, state: FSMContext):
-    user = str(msg.from_user.id)
+    """
+    Одним сообщением запускается пул тестов. На каждый пул должно быть указано:
+        1. Аудитория - в любом месте сообщения ключевое слово 'пк', 'десктоп' или 'веб' для ПК, либо "моб" для мобилок
+        2. Число респондентов - слово 'чел' или 'респ' - и в этой же строке само число
+        3. Ссылки на тест и его код. Их может быть любое число, главное 1 тест = 1 новая строчка, и чтобы код для каждого теста был в этой же строчке через пробел
+    """
     await state.clear()
+
     # проверить правильность запроса
     pool_params = url_test.validate_url_test_request(msg_text=msg.text)
     if not isinstance(pool_params, dict):
@@ -114,7 +92,7 @@ async def url_test_request(msg: Message, bot: Bot, state: FSMContext):
     pprint(pool_params)
 
     # создать пул
-    result = await simp_test.start_test(pool_params=pool_params)
+    result = await url_test.start_test(pool_params=pool_params)
 
     print(result)
     await msg.answer(text=result, disable_web_page_preview=True, parse_mode='HTML')
@@ -142,10 +120,8 @@ async def p(msg: Message, bot):
 
 
 # юзер что-то еще пишет
-@router.message(~Access(admins), F.content_type.in_({'text'}))
+@router.message(F.content_type.in_({'text'}))
 async def usr_txt2(msg: Message, bot: Bot):
-    await log(logs, msg.from_user.id, f'msg_to_admin: {msg.text}')
+    await log(logs, msg.from_user.id, f'msg not handled: {msg.text}')
 
-    # показать админам
-    for i in admins:
-        await bot.send_message(chat_id=i, text=f'Сообщение от {contact_user(msg.from_user)}: \n\n{msg.text}', parse_mode='HTML')
+    await msg.answer(text='Команда не распознана')
