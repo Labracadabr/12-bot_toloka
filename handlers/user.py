@@ -7,7 +7,6 @@ from pprint import pprint
 import requests
 from utils import *
 from toloka_scripts import url_test, check_html, yndx_2609
-from psql import top_countries, rm_duplicates
 # Инициализация
 router: Router = Router()
 
@@ -18,10 +17,6 @@ async def command(msg: Message, bot):
     user = str(msg.from_user.id)
     await log(logs, user, '/start', bot=bot)
     await msg.answer('Привет')
-
-    # сообщить админу, кто стартанул бота
-    alert = f'➕ user {contact_user(msg.from_user)}'
-    await bot.send_message(text=alert, chat_id=admins[0], disable_notification=True, parse_mode='HTML')
 
 
 # команда /help
