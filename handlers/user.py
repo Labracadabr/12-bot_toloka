@@ -85,85 +85,14 @@ async def checking_html(msg: Message, bot, state):
 async def set_test(msg: Message, state, bot):
     user = str(msg.from_user.id)
     txt = msg.text.replace('/', '')
-    if user in admins:
-        if txt == 'url_test':
-            await msg.answer('Отправь данные для нового пула')
-            await state.set_state(FSM.url_test)
-        elif txt == 'sbs_test':
-            await msg.answer('Отправь архив для нового пула')
-            await state.set_state(FSM.sbs_test)
-        await log(logs, user, msg.text, bot=bot)
 
-    else:
-        await msg.answer('Нет доступа')
-        await log(logs, user, msg.text+' no_access', bot=bot)
-
-
-# юзер отправил архив для SBS
-# @router.message()
-@router.message(StateFilter(FSM.sbs_test))
-async def sbs_test_request(msg: Message, bot: Bot, state: FSMContext):
-    user = str(msg.from_user.id)
-    pprint(msg)
-    if not msg.document or 'zip' not in msg.document.mime_type:
-        await msg.answer(f'Ошибка: я ожидаю Zip архив')
-        await state.clear()
-        return
-    os.makedirs(name='tmp_sbs', exist_ok=True)
-    file_id = msg.document.file_id
-
-    # получить ссылку для скачивания архива
-    try:
-        file_info = await bot.get_file(file_id)
-        file_url = file_info.file_path
-        url = f'https://api.telegram.org/file/bot{config.BOT_TOKEN}/{file_url}'
-        print('zip url ok:', url)
-    except Exception as e:
-        await msg.answer(f'Произошла ошибка при получении архива:\n{e}')
-        await state.clear()
-        return
-
-    # скачать архив
-    response = requests.get(url=url)
-    try:
-        # создать файл
-        zip_name = os.path.join(tmp_sbs, f'{msg.document.file_name}.zip')
-        with open(zip_name, 'wb') as media:
-            media.write(response.content)
-    except Exception as e:
-        await msg.answer(f'Произошла ошибка при скачивании архива:\n{e}')
-        await state.clear()
-        return
-
-    # распаковать скачанный архив
-    sbs_pics = []
-    with zipfile.ZipFile(zip_name, mode="r") as archive:
-        for file_info in archive.infolist():
-            file = file_info.filename.encode('cp437').decode('utf-8')  # декодинг кириллицы
-            if file.endswith((".jpg", '.png')) and '/' not in file:
-                sbs_pics.append(file)
-                archive.extract(file_info, f"{tmp_sbs}/")
-                try:
-                    path = f"{tmp_sbs}/{file_info}"
-                    os.rename(dst=path, src=path.replace(file_info.filename, file))
-                    print('file renamed')
-                except Exception as e:
-                    print(e)
-                    pass
-
-    if sbs_pics:
-        pics_list_txt = [f'№ {i}: {f}\n' for i, f in enumerate(sbs_pics, start=1)]
-        await msg.answer(text=f'Архив распакован. Найдены файлы:\n{"".join(pics_list_txt)}'
-          f'\nУкажи через пробел номера файлов, который нужно использовать как хороший и плохой ханипот, например: "2 3". Либо напиши "нет", если ханипот не нужен')
-        await state.set_state(FSM.sbs_wait)
-
-
-# юзер указал ханипоты
-# @router.message()
-@router.message(StateFilter(FSM.sbs_wait))
-async def sbs_honey(msg: Message, bot: Bot, state: FSMContext):
-    user = str(msg.from_user.id)
-    await state.clear()
+    if txt == 'url_test':
+        await msg.answer('Отправь данные для нового пула')
+        await state.set_state(FSM.url_test)
+    elif txt == 'sbs_test':
+        await msg.answer('Отправь архив для нового пула')
+        await state.set_state(FSM.sbs_test)
+    await log(logs, user, msg.text, bot=bot)
 
 
 # юзер указал данные теста
