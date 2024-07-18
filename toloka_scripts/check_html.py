@@ -6,6 +6,7 @@ from config import config
 import re
 
 
+# проверить, совпадают ли ключи из output data с полями name из html
 def check_html(project_url: str) -> str:
     result = ''
     try:
@@ -60,3 +61,7 @@ def check_html(project_url: str) -> str:
 
     finally:
         return result
+
+
+if __name__ == '__main__':
+    pass
